@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace GetVoid
@@ -14,16 +14,12 @@ namespace GetVoid
         /// <returns>Instance of boxed <see cref="void"/>.</returns>
         public static object Get()
         {
-            var stub = new VoidStub();
-            object @void = stub;
-
-            // Pin object to obtain its address
+            object @void = new VoidStub();
             GCHandle gcHandle = GCHandle.Alloc(@void, GCHandleType.Pinned);
-            nint objectHandleAddress = gcHandle.AddrOfPinnedObject() - IntPtr.Size;
 
-            // Rewrite object handle to void's type handle
-            nint voidTypeHandle = typeof(void).TypeHandle.Value;
-            Marshal.WriteIntPtr(objectHandleAddress, voidTypeHandle);
+            nint handleAddress = Unsafe.As<object, nint>(ref @void);
+            nint voidHandle = typeof(void).TypeHandle.Value;
+            Marshal.WriteIntPtr(handleAddress, voidHandle);
 
             gcHandle.Free();
             return @void;
